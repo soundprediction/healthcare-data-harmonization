@@ -16,9 +16,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"flag"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -26,14 +28,13 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/transform" /* copybara-comment: transform */
-	"google.golang.org/protobuf/encoding/prototext" /* copybara-comment: prototext */
+	"google.golang.org/protobuf/encoding/prototext"                                         /* copybara-comment: prototext */
 
-	dhpb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto" /* copybara-comment: data_harmonization_go_proto */
-	hpb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto" /* copybara-comment: harmonization_go_proto */
-	httppb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto" /* copybara-comment: http_go_proto */
-	libpb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto" /* copybara-comment: library_go_proto */
+	dhpb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto"           /* copybara-comment: data_harmonization_go_proto */
+	hpb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto"            /* copybara-comment: harmonization_go_proto */
+	httppb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto"         /* copybara-comment: http_go_proto */
+	libpb "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/proto"          /* copybara-comment: library_go_proto */
 	fileutil "github.com/GoogleCloudPlatform/healthcare-data-harmonization/mapping_engine/util/ioutil" /* copybara-comment: ioutil */
-
 )
 
 const fileWritePerm = 0666
@@ -55,7 +56,7 @@ func (s *stringSlice) Set(v string) error {
 }
 
 var (
-	inputFile         = flag.String("input_file_spec", "", "Input data file or glob pattern (JSON).")
+	inputFile         = flag.String("input_file_spec", "", "Input data file or glob pattern (JSON). Leave empty to print to stdin.")
 	outputDir         = flag.String("output_dir", "", "Path to the directory where the output will be written to. Leave empty to print to stdout.")
 	mappingFile       = flag.String("mapping_file_spec", "", "Mapping file (DHML file).")
 	harmonizeCodeDir  = flag.String("harmonize_code_dir_spec", "", "Path to the directory where the FHIR ConceptMaps that should be used for harmozing codes are.")
@@ -64,7 +65,6 @@ var (
 	dhConfigFile      = flag.String("data_harmonization_config_file_spec", "", "Data Harmonization config (textproto). If this flag is specified, other configs cannot be specified.")
 
 	verbose = flag.Bool("verbose", false, "Enables outputting full trace of operations at the end.")
-
 )
 
 const (
@@ -127,9 +127,13 @@ func unitHarmonizationConfig(path string) *hpb.UnitHarmonizationConfig {
 }
 
 func readInputs(pattern string) []string {
+	var ret []string
+	if pattern == "--" {
+		ret = append(ret, "--")
+		return ret
+	}
 	fs := fileutil.MustReadGlob(pattern, "input_dir")
 
-	var ret []string
 	for _, f := range fs {
 		fi, err := os.Stat(f)
 		if err != nil {
@@ -182,8 +186,16 @@ func main() {
 	}
 
 	for _, f := range readInputs(*inputFile) {
-		i := fileutil.MustRead(f, "input")
-
+		var i []byte
+		if f == "--" {
+			reader := bufio.NewReader(os.Stdin)
+			i, err = io.ReadAll(reader)
+			if err != nil {
+				log.Fatalf("Failed to read stdin: %v", err)
+			}
+		} else {
+			i = fileutil.MustRead(f, "input")
+		}
 		ji, err := tr.ParseJSON(i)
 		if err != nil {
 			log.Fatalf("Failed to parse inputJSON in file %v: %v", f, err)
