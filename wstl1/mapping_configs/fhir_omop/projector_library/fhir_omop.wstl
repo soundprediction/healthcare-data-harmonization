@@ -2,6 +2,7 @@
 //
 // Argument(s): Each of the following FHIR STU3 resources
 //   Condition: https://www.hl7.org/fhir/stu3/condition.html
+//   Coverage: https://www.hl7.org/fhir/stu3/coverage.html
 //   Encounter: https://www.hl7.org/fhir/stu3/encounter.html
 //   MedicationAdministration: https://www.hl7.org/fhir/stu3/MedicationAdministration.html
 //   MedicationDispense: https://www.hl7.org/fhir/stu3/medicationdispense.html
@@ -26,6 +27,7 @@
 //
 def FHIR_OMOP(resource) {
   $this (if resource.resourceType = "Condition") : Process_Condition(resource);
+  $this (if resource.resourceType = "Coverage") : Process_Coverage(resource);
   $this (if resource.resourceType = "Encounter") : Process_Encounter(resource);
   $this (if resource.resourceType = "MedicationAdministration") : Process_MedicationAdministration(resource);
   $this (if resource.resourceType = "MedicationDispense") : Process_MedicationDispense(resource);

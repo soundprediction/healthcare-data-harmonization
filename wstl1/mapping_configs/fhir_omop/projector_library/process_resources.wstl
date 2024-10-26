@@ -13,6 +13,18 @@ def Process_Condition(Condition) {
 // Description: Define FHIR STU3 to OMOP (v6.0) transformation
 //
 // Argument(s):
+//   Condition: https://www.hl7.org/fhir/stu3/coverage.html
+//
+// Output(s):
+//   Coverage: https://github.com/OHDSI/CommonDataModel/blob/v6.0.0/Documentation/CommonDataModel_Wiki_Files/StandardizedClinicalDataTables/CONDITION_OCCURRENCE.md
+//
+def Process_Coverage(Coverage) {
+  coverage_occurrence : Coverage_CoverageOccurrence(Coverage);
+}
+
+// Description: Define FHIR STU3 to OMOP (v6.0) transformation
+//
+// Argument(s):
 //   Encounter: https://www.hl7.org/fhir/stu3/encounter.html
 //
 // Output(s):
