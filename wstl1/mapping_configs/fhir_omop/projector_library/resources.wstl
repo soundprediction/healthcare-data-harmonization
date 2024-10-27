@@ -143,6 +143,28 @@ def Encounter_VisitOccurrence(Encounter) {
   discharge_to_concept_id : 0;
 }
 
+// Description: Constructs an OMOP VisitOccurrence Table (v6.0) based on FHIR STU3 Encounter Resource
+//
+// Argument(s):
+//   ExplanationOfBenefit: https://www.hl7.org/fhir/stu3/encounter.html
+//
+// Output(s):
+//   Cost: https://ohdsi.github.io/CommonDataModel/cdm53.html#cost 
+//
+def ExplanationOfBenefit_Cost(ExplanationOfBenefit) {
+  //billed_datetime : Extract_Date(ExplanationOfBenefit);
+  var identifier : ExplanationOfBenefit.identifier[where $.system = "https://bluebutton.cms.gov/resources/variables/clm_id"];
+  cost_id: $IntHash(identifier[0].value);
+  incurred_date : ExplanationOfBenefit.billablePeriod.start;
+  cost_event_id : Extract_ReferenceID(ExplanationOfBenefit.subject.reference);
+  cost_domain_id : Convert_Terminology(ExplanationOfBenefit.class.code, "http://hl7.org/fhir/v3/ActCode");
+  total_cost : ExplanationOfBenefit.totalCost.value;
+  total_paid : ExplanationOfBenefit.payment.amount.value;
+  // No Matching Concept/Attribute found in FHIR STU3
+  visit_source_concept_id : 0;
+  discharge_to_concept_id : 0;
+}
+
 // Description: Constructs an OMOP Observation Table (v6.0) based on FHIR STU3 Observation Resource
 //
 // Argument(s):
